@@ -1,0 +1,76 @@
+
+<?php
+    <a href="post_edit.php?id=<?= $post['id'] ?>">Edit</a>
+    <?php if (isAdmin()): ?><a href="post_delete.php?id=<?= $post['id'] ?>">Delete</a><?php endif; ?>
+  </div>
+  <hr>
+<?php endforeach; ?>
+
+<!-- File: post_create.php -->
+<?php
+require 'auth.php';
+require 'db.php';
+if (!isLoggedIn()) { header('Location: login.php'); exit; }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $title = $_POST['title'];
+    $content = $_POST['content'];
+    if (!empty($title) && !empty($content)) {
+        $stmt = $pdo->prepare("INSERT INTO posts (title, content, created_at) VALUES (?, ?, NOW())");
+        $stmt->execute([$title, $content]);
+        header('Location: dashboard.php');
+    }
+}
+?>
+<form method="POST">
+  Title: <input name="title" required><br>
+  Content:<br><textarea name="content" required></textarea><br>
+  <button type="submit">Create</button>
+</form>
+
+<!-- File: post_delete.php -->
+<?php
+require 'auth.php';
+require 'db.php';
+if (!isAdmin()) { die('Unauthorized'); }
+$id = $_GET['id'] ?? 0;
+$stmt = $pdo->prepare("DELETE FROM posts WHERE id = ?");
+$stmt->execute([$id]);
+header('Location: dashboard.php');
+
+// File: logout.php
+session_start();
+session_destroy();
+header('Location: login.php');
+
+// File: README.md
+# Secure Blog Application
+
+## Features
+- CRUD with PHP & MySQL
+- User roles: Admin vs Editor
+- Authentication and Session Management
+- Prepared Statements to prevent SQL injection
+- Client & Server-side Validation
+
+## Roles:
+- **Admin**: Create, Edit, Delete posts
+- **Editor**: Create and Edit only
+
+---
+
+**Database Tables:**
+
+```sql
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  role VARCHAR(50) DEFAULT 'editor'
+);
+
+CREATE TABLE posts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(255),
+  content TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
